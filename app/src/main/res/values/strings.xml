@@ -1134,6 +1134,8 @@
     <string name="content_settings_header_shorts">Shorts</string>
     <string name="content_settings_shorts_content_title">Show Shorts</string>
     <string name="content_settings_shorts_content_subtitle">Hide Shorts everywhere. Saved Shorts and history are kept.</string>
+    <string name="content_settings_shorts_duration_title">Enable Shorts for how long?</string>
+    <string name="content_settings_shorts_duration_body">Choose how many hours Shorts stay on. Maximum: 24 hours.</string>
     <string name="content_settings_channel_shorts_tab_title">Shorts tab on channels</string>
     <string name="content_settings_channel_shorts_tab_subtitle">Keep a channel\'s Shorts tab while Shorts are hidden</string>
     <string name="content_settings_hide_watched_shorts_title">Hide watched Shorts</string>

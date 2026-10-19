@@ -15,7 +15,7 @@ class LibrarySettingsViewModel
     ) : SettingsViewModel() {
         internal val hidden = preferences.hiddenLibrarySections.map(LibrarySection::fromStored).asState(emptySet())
         val separatePlaylists = preferences.separatePlaylistKinds.asState(false)
-        val shortsContent = preferences.shortsContentEnabled.asState(true)
+        val shortsContent = preferences.shortsContentEnabled.asState(false)
         val notes = preferences.notesEnabled.asState(true)
 
         internal fun setShown(

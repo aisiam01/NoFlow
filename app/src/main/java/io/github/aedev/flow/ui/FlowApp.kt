@@ -66,6 +66,9 @@ import io.github.aedev.flow.ui.theme.ThemeMode
 import io.github.aedev.flow.ui.theme.ThemeVariant
 import io.github.aedev.flow.ui.utils.LocalWindowSizeClass
 import io.github.aedev.flow.ui.utils.isMediumWidth
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlin.math.roundToInt
 
@@ -99,7 +102,7 @@ fun FlowApp(
 
     val preferences = remember { PlayerPreferences(context) }
     val isHomeNavigationEnabled by preferences.homeNavigationEnabled.collectAsState(initial = true)
-    val isShortsNavigationEnabled by preferences.effectiveShortsNavigationEnabled.collectAsState(initial = true)
+    val isShortsNavigationEnabled by preferences.effectiveShortsNavigationEnabled.collectAsState(initial = false)
     val isMusicNavigationEnabled by preferences.musicNavigationEnabled.collectAsState(initial = true)
     val isSearchNavigationEnabled by preferences.searchNavigationEnabled.collectAsState(initial = false)
     val isCategoriesNavigationEnabled by preferences.categoriesNavigationEnabled.collectAsState(initial = false)
@@ -140,6 +143,21 @@ fun FlowApp(
 
     // Onboarding check
     var needsOnboarding by remember { mutableStateOf<Boolean?>(null) }
+
+    LaunchedEffect(preferences) {
+        combine(preferences.shortsContentEnabledRaw, preferences.shortsContentExpiresAt) { enabled, expiresAt ->
+            enabled to expiresAt
+        }.collectLatest { (enabled, expiresAt) ->
+            if (!enabled || expiresAt <= 0L) return@collectLatest
+            val remainingMs = expiresAt - System.currentTimeMillis()
+            if (remainingMs <= 0L) {
+                preferences.setShortsContentEnabled(false)
+                return@collectLatest
+            }
+            delay(remainingMs)
+            preferences.setShortsContentEnabled(false)
+        }
+    }
 
     LaunchedEffect(Unit) {
         DeepFlowManager.initialize(context)

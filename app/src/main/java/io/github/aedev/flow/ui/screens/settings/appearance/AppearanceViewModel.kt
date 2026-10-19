@@ -55,7 +55,7 @@ class AppearanceViewModel
         val cardMarkWatched = preferences.videoCardMarkWatchedEnabled.asState(false)
         val cardWatchProgress = preferences.showWatchProgress.asState(true)
 
-        val shortsContent = preferences.shortsContentEnabled.asState(true)
+        val shortsContent = preferences.shortsContentEnabled.asState(false)
         val navigationVisibility: StateFlow<NavigationVisibility> =
             combine(
                 preferences.homeNavigationEnabled,

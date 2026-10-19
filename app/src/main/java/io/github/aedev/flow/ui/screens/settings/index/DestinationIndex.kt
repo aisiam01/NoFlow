@@ -26,7 +26,11 @@ internal object DestinationIndex {
     /** The editor is left out: it opens one theme, so it has no page of its own to find. */
     val all: List<SettingEntry> =
         SettingsDestination.entries
-            .filter { it != SettingsDestination.HOME && it != SettingsDestination.CUSTOM_THEME_EDIT }
+            .filter { destination ->
+                destination != SettingsDestination.HOME &&
+                    destination != SettingsDestination.CUSTOM_THEME_EDIT &&
+                    destination != SettingsDestination.MUSIC_HOME
+            }
             .map(::entry)
 
     private fun summaryOf(destination: SettingsDestination): Int? =
