@@ -30,8 +30,7 @@ internal object DestinationIndex {
                 destination != SettingsDestination.HOME &&
                     destination != SettingsDestination.CUSTOM_THEME_EDIT &&
                     destination != SettingsDestination.MUSIC_HOME
-            }
-            .map(::entry)
+            }.map(::entry)
 
     private fun summaryOf(destination: SettingsDestination): Int? =
         when (destination) {
