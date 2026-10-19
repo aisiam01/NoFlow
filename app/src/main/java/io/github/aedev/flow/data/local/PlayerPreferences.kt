@@ -45,6 +45,9 @@ const val DEFAULT_FULLSCREEN_SEEKBAR_PADDING_DP = 48
 const val MAX_FULLSCREEN_SEEKBAR_PADDING_DP = 120
 const val DEFAULT_CONCURRENT_DOWNLOADS = 3
 const val MAX_CONCURRENT_DOWNLOADS = 5
+const val SHORTS_CONTENT_MIN_HOURS = 1
+const val SHORTS_CONTENT_MAX_HOURS = 24
+const val DEFAULT_SHORTS_CONTENT_HOURS = 1
 
 /** On until turned off, matching NewPipe's default and the Background button (#1298). */
 const val DEFAULT_BACKGROUND_PLAY_ENABLED = true
@@ -172,6 +175,8 @@ class PlayerPreferences(
         val PLAYER_HAPTICS_ENABLED = booleanPreferencesKey("player_haptics_enabled")
         val GROUPED_QUALITY_SELECTOR_ENABLED = booleanPreferencesKey("grouped_quality_selector_enabled")
         val SHORTS_CONTENT_ENABLED = booleanPreferencesKey("shorts_content_enabled")
+        val SHORTS_CONTENT_EXPIRES_AT = longPreferencesKey("shorts_content_expires_at")
+        val SHORTS_CONTENT_DURATION_HOURS = intPreferencesKey("shorts_content_duration_hours")
         val CHANNEL_SHORTS_TAB_WHEN_HIDDEN = booleanPreferencesKey("channel_shorts_tab_when_hidden")
         val NOTES_ENABLED = booleanPreferencesKey("notes_enabled")
         val CHANNEL_NOTES_ENABLED = booleanPreferencesKey("channel_notes_enabled")
@@ -959,15 +964,46 @@ class PlayerPreferences(
      *
      * Hiding only. Saved Shorts and Shorts watch history stay in the database untouched.
      */
-    val shortsContentEnabled: Flow<Boolean> =
+    val shortsContentEnabledRaw: Flow<Boolean> =
         context.playerPreferencesDataStore.data
             .map { preferences ->
-                preferences[Keys.SHORTS_CONTENT_ENABLED] ?: true
+                preferences[Keys.SHORTS_CONTENT_ENABLED] ?: false
             }
 
+    val shortsContentExpiresAt: Flow<Long> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.SHORTS_CONTENT_EXPIRES_AT] ?: 0L }
+
+    val shortsContentDurationHours: Flow<Int> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                (preferences[Keys.SHORTS_CONTENT_DURATION_HOURS] ?: DEFAULT_SHORTS_CONTENT_HOURS)
+                    .coerceIn(SHORTS_CONTENT_MIN_HOURS, SHORTS_CONTENT_MAX_HOURS)
+            }
+
+    val shortsContentEnabled: Flow<Boolean> =
+        combine(shortsContentEnabledRaw, shortsContentExpiresAt) { enabled, expiresAt ->
+            enabled && (expiresAt <= 0L || expiresAt > System.currentTimeMillis())
+        }.distinctUntilChanged()
+
     suspend fun setShortsContentEnabled(enabled: Boolean) {
+        if (enabled) {
+            setShortsContentEnabledForHours(shortsContentDurationHours.first())
+            return
+        }
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.SHORTS_CONTENT_ENABLED] = enabled
+            preferences[Keys.SHORTS_CONTENT_EXPIRES_AT] = 0L
+        }
+    }
+
+    suspend fun setShortsContentEnabledForHours(hours: Int) {
+        val clampedHours = hours.coerceIn(SHORTS_CONTENT_MIN_HOURS, SHORTS_CONTENT_MAX_HOURS)
+        val expiresAt = System.currentTimeMillis() + clampedHours * 3_600_000L
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.SHORTS_CONTENT_ENABLED] = true
+            preferences[Keys.SHORTS_CONTENT_DURATION_HOURS] = clampedHours
+            preferences[Keys.SHORTS_CONTENT_EXPIRES_AT] = expiresAt
         }
     }
 

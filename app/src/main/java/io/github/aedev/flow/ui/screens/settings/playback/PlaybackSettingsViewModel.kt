@@ -90,7 +90,7 @@ class PlaybackSettingsViewModel
         val liveChat = preferences.liveChatEnabled.asState(true)
         val commentsPreview = preferences.commentsPreviewEnabled.asState(true)
 
-        val shortsContent = preferences.shortsContentEnabled.asState(true)
+        val shortsContent = preferences.shortsContentEnabled.asState(false)
         val disableShortsPlayer = preferences.disableShortsPlayer.asState(false)
         val shortsPlayerPrompt = preferences.showShortsPlayerPrompt.asState(true)
         val shortsPlaybackMode = preferences.shortsPlaybackMode.asState(ShortsPlaybackModes.LOOP)

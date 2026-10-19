@@ -1,6 +1,7 @@
 package io.github.aedev.flow.ui.screens.settings.content
 
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.aedev.flow.data.local.DEFAULT_SHORTS_CONTENT_HOURS
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.SharedLinkAction
 import io.github.aedev.flow.data.local.WatchedThreshold
@@ -31,7 +32,8 @@ class ContentSettingsViewModel
         val subsRefreshOnStartup = preferences.subscriptionRefreshOnStartup.asState(false)
         val subsCheckedCount = preferences.subscriptionShowCheckedVideoCount.asState(true)
 
-        val shortsContent = preferences.shortsContentEnabled.asState(true)
+        val shortsContent = preferences.shortsContentEnabled.asState(false)
+        val shortsContentDurationHours = preferences.shortsContentDurationHours.asState(DEFAULT_SHORTS_CONTENT_HOURS)
         val channelShortsTab = preferences.channelShortsTabWhenHidden.asState(false)
         val hideWatchedShorts = preferences.hideWatchedShorts.asState(true)
         val removeWatchedWatchLater = preferences.removeWatchedFromWatchLater.asState(false)
@@ -74,6 +76,8 @@ class ContentSettingsViewModel
         fun setSubsCheckedCount(value: Boolean) = write { preferences.setSubscriptionShowCheckedVideoCount(value) }
 
         fun setShortsContent(value: Boolean) = write { preferences.setShortsContentEnabled(value) }
+
+        fun setShortsContentForHours(hours: Int) = write { preferences.setShortsContentEnabledForHours(hours) }
 
         fun setChannelShortsTab(value: Boolean) = write { preferences.setChannelShortsTabWhenHidden(value) }
 

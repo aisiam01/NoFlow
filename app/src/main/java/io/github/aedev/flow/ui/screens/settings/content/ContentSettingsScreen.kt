@@ -5,11 +5,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.aedev.flow.R
+import io.github.aedev.flow.data.local.SHORTS_CONTENT_MAX_HOURS
+import io.github.aedev.flow.data.local.SHORTS_CONTENT_MIN_HOURS
 import io.github.aedev.flow.data.local.SharedLinkAction
 import io.github.aedev.flow.data.local.WatchedThreshold
 import io.github.aedev.flow.ui.components.settings.SettingsDestination
@@ -36,6 +40,7 @@ internal fun ContentSettingsScreen(
     viewModel: ContentSettingsViewModel = hiltViewModel(),
 ) {
     val shortsContent by viewModel.shortsContent.collectAsStateWithLifecycle()
+    val shortsContentDurationHours by viewModel.shortsContentDurationHours.collectAsStateWithLifecycle()
     val channelShortsTab by viewModel.channelShortsTab.collectAsStateWithLifecycle()
     val hideWatchedHome by viewModel.hideWatchedHome.collectAsStateWithLifecycle()
     val hideWatchedSubs by viewModel.hideWatchedSubs.collectAsStateWithLifecycle()
@@ -46,6 +51,7 @@ internal fun ContentSettingsScreen(
     val linkHandlingLabel = rememberLinkHandlingLabel()
     var showThresholdDialog by rememberSaveable { mutableStateOf(false) }
     var showSharedLinksDialog by rememberSaveable { mutableStateOf(false) }
+    var showShortsDurationDialog by rememberSaveable { mutableStateOf(false) }
 
     SettingsPage(
         title = stringResource(R.string.settings_content_title),
@@ -59,12 +65,6 @@ internal fun ContentSettingsScreen(
             switch(ContentIndex.homeShortsShelf, viewModel.homeShortsShelf, viewModel::setHomeShortsShelf, enabled = shortsContent)
             switch(ContentIndex.homeSubscriptions, viewModel.homeSubscriptions, viewModel::setHomeSubscriptions)
             switch(ContentIndex.hideWatchedHome, viewModel.hideWatchedHome, viewModel::setHideWatchedHome)
-        }
-        group(key = "content.music", header = R.string.screen_title_music) {
-            nav(
-                DestinationIndex.entry(SettingsDestination.MUSIC_HOME),
-                onClick = { onNavigate(SettingsTarget(SettingsDestination.MUSIC_HOME)) },
-            )
         }
         group(key = "content.library", header = R.string.library) {
             nav(
@@ -84,7 +84,19 @@ internal fun ContentSettingsScreen(
             switch(ContentIndex.subsCheckedCount, viewModel.subsCheckedCount, viewModel::setSubsCheckedCount)
         }
         group(key = "content.shorts", header = R.string.content_settings_header_shorts) {
-            switch(ContentIndex.shortsContent, viewModel.shortsContent, viewModel::setShortsContent)
+            row(ContentIndex.shortsContent.key) { shape ->
+                ShortsContentSwitchRow(
+                    shape = shape,
+                    checked = shortsContent,
+                    onCheckedChange = { enabled ->
+                        if (enabled) {
+                            showShortsDurationDialog = true
+                        } else {
+                            viewModel.setShortsContent(false)
+                        }
+                    },
+                )
+            }
             row(ContentIndex.channelShortsTab.key) { shape ->
                 FlowSwitchRow(
                     title = stringResource(ContentIndex.channelShortsTab.title),
@@ -154,7 +166,38 @@ internal fun ContentSettingsScreen(
             onDismiss = { showSharedLinksDialog = false },
         )
     }
+
+    if (showShortsDurationDialog) {
+        FlowChoiceDialog(
+            title = stringResource(R.string.content_settings_shorts_duration_title),
+            description = stringResource(R.string.content_settings_shorts_duration_body),
+            options = ShortsContentDurationOptions.map { hours -> FlowChoice(hours, shortsDurationLabel(hours)) },
+            selected = shortsContentDurationHours,
+            onSelect = { hours -> viewModel.setShortsContentForHours(hours) },
+            onDismiss = { showShortsDurationDialog = false },
+        )
+    }
 }
+
+private val ShortsContentDurationOptions = (SHORTS_CONTENT_MIN_HOURS..SHORTS_CONTENT_MAX_HOURS).toList()
+
+@Composable
+private fun ShortsContentSwitchRow(
+    shape: Shape,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    FlowSwitchRow(
+        title = stringResource(ContentIndex.shortsContent.title),
+        supportingText = stringResource(R.string.content_settings_shorts_content_subtitle),
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        shape = shape,
+    )
+}
+
+@Composable
+private fun shortsDurationLabel(hours: Int): String = pluralStringResource(R.plurals.deep_flow_duration_hours, hours, hours)
 
 @Composable
 private fun sharedLinkActionLabel(action: SharedLinkAction): String =
